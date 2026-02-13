@@ -60,6 +60,7 @@ DATA INTEGRITY:
 - Only use the data provided below. Never fabricate numbers.
 - Format currency values as plain numbers (e.g., 1234.56 not "$1,234.56") and set format to 'currency'.
 - Format percentages as plain numbers (e.g., 5.8 not "5.8%") and set format to 'percent'.
+- For table rows, keep numeric fields as numbers (including ROAS, conversion_rate, CTR). Do not include currency symbols, commas, or percent signs. The frontend handles all number formatting.
 - For charts, ensure xKey matches a key present in every points object, and yKeys lists only numeric keys.
 - If data is missing or incomplete, mention the limitation in your narrative.`,
     prompt: `User question: ${prompt}\n\nData gathered from database:\n${dataContext}`,

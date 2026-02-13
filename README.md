@@ -28,6 +28,7 @@ Fill in your `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key          # optional
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ANTHROPIC_API_KEY=your-anthropic-key
 ```
@@ -91,7 +92,7 @@ User prompt
 
 ### Two-Phase Design
 
-The AI SDK's `streamObject` doesn't support tool-calling, so the endpoint uses a two-phase approach:
+The endpoint uses a two-phase approach to keep tool-calling and schema-constrained streaming cleanly separated:
 
 1. **Phase 1** — `generateText` with tools: Claude decides which Supabase RPCs to call based on the user's prompt, fetches real data, and produces a text summary of findings
 2. **Phase 2** — `streamObject` with Zod schema: Claude takes the data summary and generates a schema-constrained streaming JSON report
@@ -110,6 +111,7 @@ This keeps tool-calling and structured generation cleanly separated while mainta
 | **Supabase RPC functions** | All data access goes through Postgres functions (not raw table queries). Functions use `SECURITY DEFINER` and `SET search_path = public`. The `get_timeseries` function whitelists allowed metric columns rather than accepting arbitrary identifiers. |
 | **Standardized tool return shape** | All tools return `{ ok: true, data }` or `{ ok: false, error }` so the LLM can pattern-match reliably on failures and adapt its narrative. |
 | **ErrorBoundary per section** | Malformed AI output crashes are isolated to individual sections, not the entire report. |
+| **Raw numeric data contract** | The AI is instructed to emit raw numbers in table rows (no currency symbols, commas, or percent signs). The frontend handles all formatting, which keeps sorting correct. |
 
 ## Project Structure
 
@@ -170,8 +172,7 @@ No real customer or production data is used.
 
 **Trade-offs made:**
 
-- The two-phase approach means the user waits for all tool calls to complete before seeing the report stream. A single-pass `generateText` with tools + structured output would be better UX but isn't supported by the SDK.
-- Auto-save uses the report title as the prompt (since the original prompt isn't passed through the streaming response). A proper implementation would pass it through.
+- The two-phase approach means the user waits for all tool calls to complete before seeing the report stream. A tighter integration could show progress during data fetching, but the clean separation makes the pipeline easier to debug and extend.
 - No authentication — the service role key is only used server-side, but there's no user auth layer.
 
 **With more time, I would:**

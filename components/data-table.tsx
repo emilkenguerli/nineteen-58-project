@@ -28,7 +28,12 @@ function useSortableData(
       const aStr = String(aVal ?? '');
       const bStr = String(bVal ?? '');
 
-      const result = aStr.localeCompare(bStr, undefined, { numeric: true });
+      const aNum = typeof aVal === 'number' ? aVal : parseFloat(aStr.replace(/[^0-9.\-]/g, ''));
+      const bNum = typeof bVal === 'number' ? bVal : parseFloat(bStr.replace(/[^0-9.\-]/g, ''));
+
+      const result = !isNaN(aNum) && !isNaN(bNum)
+        ? aNum - bNum
+        : aStr.localeCompare(bStr, undefined, { numeric: true });
       return sortConfig.direction === 'asc' ? result : -result;
     });
   }, [items, sortConfig]);

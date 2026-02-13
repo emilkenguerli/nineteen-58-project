@@ -5,6 +5,7 @@ import { ReportRenderer } from '@/components/report-renderer';
 
 interface SavedReport {
   id: string;
+  title?: string;
   prompt: string;
   report_json?: Record<string, unknown>;
   created_at: string;
@@ -113,10 +114,15 @@ export default function ReportsPage() {
                 onClick={() => handleSelectReport(report)}
                 className="w-full text-left px-4 py-4 hover:bg-gray-50 transition-colors flex items-center justify-between group"
               >
-                <div>
-                  <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600">
-                    {report.prompt}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 group-hover:text-blue-600 truncate">
+                    {report.title || report.prompt}
                   </p>
+                  {report.title && (
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      &ldquo;{report.prompt}&rdquo;
+                    </p>
+                  )}
                   <p className="text-xs text-gray-400 mt-1">
                     {new Date(report.created_at).toLocaleDateString('en-US', {
                       year: 'numeric',

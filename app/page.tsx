@@ -14,15 +14,17 @@ export default function Home() {
 
   const [savedId, setSavedId] = useState<string | null>(null);
   const prevIsLoading = useRef(isLoading);
+  const lastPrompt = useRef<string>('');
 
   // Auto-save report when generation completes
   useEffect(() => {
-    if (prevIsLoading.current && !isLoading && object?.title && object?.sections?.length) {
+    if (prevIsLoading.current && !isLoading && lastPrompt.current && object?.title && object?.sections?.length) {
       fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          prompt: object.title,
+          prompt: lastPrompt.current,
+          title: object.title,
           report_json: object,
         }),
       })
@@ -39,6 +41,7 @@ export default function Home() {
 
   const handleSubmit = (prompt: string) => {
     setSavedId(null);
+    lastPrompt.current = prompt;
     submit({ prompt });
   };
 

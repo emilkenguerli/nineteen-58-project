@@ -6,7 +6,7 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from('reports')
-      .select('id, prompt, created_at')
+      .select('id, title, prompt, created_at')
       .order('created_at', { ascending: false })
       .limit(50);
 
@@ -23,7 +23,7 @@ export async function GET() {
 // POST /api/reports — Save a completed report
 export async function POST(req: Request) {
   try {
-    const { prompt, report_json } = await req.json();
+    const { prompt, title, report_json } = await req.json();
 
     if (!prompt || !report_json) {
       return NextResponse.json(
@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     const { data, error } = await supabaseAdmin
       .from('reports')
-      .insert({ prompt, report_json })
+      .insert({ prompt, title: title || null, report_json })
       .select('id')
       .single();
 

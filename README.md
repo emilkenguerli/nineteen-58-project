@@ -150,6 +150,12 @@ seed.sql               # Database schema, RPC functions, seed data, RLS
 - **Recharts** — Bar and line chart rendering
 - **Tailwind CSS v4** — Styling
 
+## Seed Data
+
+This project uses a fully synthetic dataset generated specifically for the assessment. The seed script creates ~5 campaigns, ~5 channels, and ~14 days of daily performance metrics (~350 rows) using `generate_series` with deterministic variation. The goal is to produce realistic-looking distributions (CTR, ROAS, spend) so prompts like "week-over-week trends" and "best performing channel" yield meaningful reports.
+
+No real customer or production data is used.
+
 ## Error Handling
 
 | Scenario | Handling |

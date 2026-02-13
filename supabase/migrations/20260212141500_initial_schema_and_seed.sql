@@ -3,7 +3,7 @@
 -- seed.sql — tables, indexes, RLS, RPC functions, and deterministic seed data
 -- ============================================================================
 
--- Enable pgcrypto for UUID generation
+-- Enable pgcrypto for gen_random_uuid
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================================================

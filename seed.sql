@@ -48,6 +48,7 @@ CREATE TABLE IF NOT EXISTS daily_metrics (
 CREATE TABLE IF NOT EXISTS reports (
     id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     prompt      TEXT NOT NULL,
+    title       TEXT,
     report_json JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -60,6 +61,7 @@ CREATE INDEX IF NOT EXISTS idx_daily_metrics_campaign_id ON daily_metrics (campa
 CREATE INDEX IF NOT EXISTS idx_daily_metrics_channel_id  ON daily_metrics (channel_id);
 CREATE INDEX IF NOT EXISTS idx_daily_metrics_date        ON daily_metrics (date);
 CREATE INDEX IF NOT EXISTS idx_campaigns_status          ON campaigns (status);
+CREATE INDEX IF NOT EXISTS idx_reports_created_at         ON reports (created_at DESC);
 
 -- ============================================================================
 -- 3. ROW-LEVEL SECURITY

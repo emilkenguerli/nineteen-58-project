@@ -24,6 +24,7 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt: lastPrompt.current,
+          title: object.title,
           report_json: object,
         }),
       })

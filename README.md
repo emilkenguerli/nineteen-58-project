@@ -28,6 +28,7 @@ Fill in your `.env.local`:
 
 ```
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key          # optional
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 ANTHROPIC_API_KEY=your-anthropic-key
 ```

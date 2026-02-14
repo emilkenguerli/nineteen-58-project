@@ -6,7 +6,7 @@ import { reportTools } from '@/lib/tools';
 export const maxDuration = 60;
 
 export async function POST(req: Request) {
-  const { prompt } = await req.json();
+  const { prompt, previousReport } = await req.json();
 
   if (!prompt || typeof prompt !== 'string') {
     return new Response(JSON.stringify({ error: 'Missing prompt' }), {
@@ -14,6 +14,15 @@ export async function POST(req: Request) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
+
+  // Build context strings for follow-up refinement
+  const previousContext = previousReport
+    ? `\n\nThe user is refining a previous report titled "${previousReport.title}". Summary: "${previousReport.summary}". Sections covered: ${previousReport.sections?.map((s: { heading?: string }) => s.heading).join(', ')}. Query additional data only if the follow-up question requires information not already gathered.`
+    : '';
+
+  const refinementContext = previousReport
+    ? `\n\nPrevious report (for reference):\n${JSON.stringify(previousReport, null, 2)}\n\nThe user wants to refine or drill into this report. Modify, extend, or focus the report based on their follow-up question. Keep relevant sections from the previous report and add/modify sections as needed.`
+    : '';
 
   // Phase 1: Use generateText with tools to let the model query Supabase
   const { text: dataContext, steps } = await generateText({
@@ -26,7 +35,7 @@ so they can be used to build a report. Be thorough — include all relevant metr
 
 TOOL RESULT SHAPE:
 - All tools return { ok: true, data: ... } on success or { ok: false, error: "..." } on failure.
-- If a tool fails, note the error and continue with other tools.`,
+- If a tool fails, note the error and continue with other tools.${previousContext}`,
     tools: reportTools,
     stopWhen: stepCountIs(10),
     prompt,
@@ -62,7 +71,7 @@ DATA INTEGRITY:
 - Format percentages as plain numbers (e.g., 5.8 not "5.8%") and set format to 'percent'.
 - For table rows, keep numeric fields as numbers (including ROAS, conversion_rate, CTR). Do not include currency symbols, commas, or percent signs. The frontend handles all number formatting.
 - For charts, ensure xKey matches a key present in every points object, and yKeys lists only numeric keys.
-- If data is missing or incomplete, mention the limitation in your narrative.`,
+- If data is missing or incomplete, mention the limitation in your narrative.${refinementContext}`,
     prompt: `User question: ${prompt}\n\nData gathered from database:\n${dataContext}`,
     onFinish({ object, error }) {
       if (error) {

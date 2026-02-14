@@ -13,12 +13,14 @@ export default function Home() {
   });
 
   const [savedId, setSavedId] = useState<string | null>(null);
+  const [previousReport, setPreviousReport] = useState<Record<string, unknown> | null>(null);
   const prevIsLoading = useRef(isLoading);
   const lastPrompt = useRef<string>('');
 
   // Auto-save report when generation completes
   useEffect(() => {
     if (prevIsLoading.current && !isLoading && lastPrompt.current && object?.title && object?.sections?.length) {
+      setPreviousReport(object as Record<string, unknown>);
       fetch('/api/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -42,7 +44,12 @@ export default function Home() {
   const handleSubmit = (prompt: string) => {
     setSavedId(null);
     lastPrompt.current = prompt;
-    submit({ prompt });
+    submit({ prompt, previousReport });
+  };
+
+  const handleNewReport = () => {
+    setPreviousReport(null);
+    setSavedId(null);
   };
 
   return (
@@ -65,7 +72,19 @@ export default function Home() {
         </div>
 
         {/* Prompt Input */}
-        <PromptInput onSubmit={handleSubmit} isLoading={isLoading} />
+        <div className="space-y-2">
+          <PromptInput onSubmit={handleSubmit} isLoading={isLoading} isRefining={!!previousReport} />
+          {previousReport && !isLoading && (
+            <div className="text-center">
+              <button
+                onClick={handleNewReport}
+                className="text-sm text-gray-400 hover:text-gray-600 underline transition-colors"
+              >
+                New report
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Error Banner */}
         {error && (
@@ -78,7 +97,7 @@ export default function Home() {
         {isLoading && !object && (
           <div className="text-center py-12 text-gray-400 space-y-3">
             <div className="inline-block w-8 h-8 border-2 border-gray-300 border-t-blue-500 rounded-full animate-spin" />
-            <p>Querying your data and generating report...</p>
+            <p>{previousReport ? 'Refining report...' : 'Querying your data and generating report...'}</p>
           </div>
         )}
 

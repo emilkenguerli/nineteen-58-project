@@ -56,6 +56,12 @@ export default function Home() {
           <p className="text-gray-500">
             Ask any question about your campaign performance and get a visual report
           </p>
+          <a
+            href="/reports"
+            className="inline-block text-sm text-gray-400 hover:text-gray-600 underline"
+          >
+            View past reports
+          </a>
         </div>
 
         {/* Prompt Input */}
@@ -94,24 +100,10 @@ export default function Home() {
         {/* Saved indicator */}
         {savedId && !isLoading && (
           <p className="text-center text-xs text-gray-400">
-            Report saved &middot;{' '}
-            <a href="/reports" className="underline hover:text-gray-600">
-              View all reports
-            </a>
+            Report saved
           </p>
         )}
 
-        {/* Footer link to reports history */}
-        {!isLoading && !object && (
-          <div className="text-center pt-8">
-            <a
-              href="/reports"
-              className="text-sm text-gray-400 hover:text-gray-600 underline"
-            >
-              View past reports
-            </a>
-          </div>
-        )}
       </div>
     </main>
   );

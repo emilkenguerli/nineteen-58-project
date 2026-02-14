@@ -1,13 +1,13 @@
-import { supabaseAdmin } from '@/lib/supabase-admin';
-import { NextResponse } from 'next/server';
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { NextResponse } from "next/server";
 
-// GET /api/reports — List saved reports
+// GET /api/reports - List saved reports
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
-      .from('reports')
-      .select('id, title, prompt, created_at')
-      .order('created_at', { ascending: false })
+      .from("reports")
+      .select("id, title, prompt, created_at")
+      .order("created_at", { ascending: false })
       .limit(50);
 
     if (error) throw error;
@@ -20,22 +20,22 @@ export async function GET() {
   }
 }
 
-// POST /api/reports — Save a completed report
+// POST /api/reports - Save a completed report
 export async function POST(req: Request) {
   try {
     const { prompt, title, report_json } = await req.json();
 
     if (!prompt || !report_json) {
       return NextResponse.json(
-        { error: 'Missing prompt or report_json' },
+        { error: "Missing prompt or report_json" },
         { status: 400 },
       );
     }
 
     const { data, error } = await supabaseAdmin
-      .from('reports')
+      .from("reports")
       .insert({ prompt, title: title || null, report_json })
-      .select('id')
+      .select("id")
       .single();
 
     if (error) throw error;

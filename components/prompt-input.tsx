@@ -5,6 +5,7 @@ import { useState, type KeyboardEvent } from 'react';
 interface PromptInputProps {
   onSubmit: (prompt: string) => void;
   isLoading: boolean;
+  isRefining?: boolean;
 }
 
 const EXAMPLE_PROMPTS = [
@@ -14,7 +15,7 @@ const EXAMPLE_PROMPTS = [
   'Show daily revenue trends with week-over-week comparison',
 ];
 
-export function PromptInput({ onSubmit, isLoading }: PromptInputProps) {
+export function PromptInput({ onSubmit, isLoading, isRefining = false }: PromptInputProps) {
   const [prompt, setPrompt] = useState('');
 
   const handleSubmit = () => {
@@ -33,8 +34,8 @@ export function PromptInput({ onSubmit, isLoading }: PromptInputProps) {
 
   const handleExampleClick = (example: string) => {
     if (isLoading) return;
-    setPrompt(example);
     onSubmit(example);
+    setPrompt('');
   };
 
   return (
@@ -44,7 +45,7 @@ export function PromptInput({ onSubmit, isLoading }: PromptInputProps) {
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask a question about your campaign data..."
+          placeholder={isRefining ? 'Ask a follow-up question...' : 'Ask a question about your campaign data...'}
           rows={2}
           disabled={isLoading}
           className="flex-1 resize-none rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none disabled:bg-gray-50 disabled:text-gray-400"
@@ -78,25 +79,29 @@ export function PromptInput({ onSubmit, isLoading }: PromptInputProps) {
               </svg>
               Generating...
             </span>
+          ) : isRefining ? (
+            'Refine'
           ) : (
             'Submit'
           )}
         </button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        {EXAMPLE_PROMPTS.map((example) => (
-          <button
-            key={example}
-            type="button"
-            onClick={() => handleExampleClick(example)}
-            disabled={isLoading}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-          >
-            {example}
-          </button>
-        ))}
-      </div>
+      {!isRefining && (
+        <div className="flex flex-wrap gap-2">
+          {EXAMPLE_PROMPTS.map((example) => (
+            <button
+              key={example}
+              type="button"
+              onClick={() => handleExampleClick(example)}
+              disabled={isLoading}
+              className="rounded-full border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-600 hover:bg-gray-50 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            >
+              {example}
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

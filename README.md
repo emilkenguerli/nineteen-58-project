@@ -94,24 +94,34 @@ User prompt
 
 The endpoint uses a two-phase approach to keep tool-calling and schema-constrained streaming cleanly separated:
 
-1. **Phase 1** — `generateText` with tools: Claude decides which Supabase RPCs to call based on the user's prompt, fetches real data, and produces a text summary of findings
-2. **Phase 2** — `streamObject` with Zod schema: Claude takes the data summary and generates a schema-constrained streaming JSON report
+1. **Phase 1** - `generateText` with tools: Claude decides which Supabase RPCs to call based on the user's prompt, fetches real data, and produces a text summary of findings
+2. **Phase 2** - `streamObject` with Zod schema: Claude takes the data summary and generates a schema-constrained streaming JSON report
 
 This keeps tool-calling and structured generation cleanly separated while maintaining full streaming to the client.
 
+### Prompt Refinement
+
+After a report is generated, the user can ask follow-up questions to modify or drill into it. The client tracks the last completed report and sends it alongside the new prompt. Both phases receive context about the previous report:
+
+- **Phase 1** gets the previous report's title, summary, and section headings so Claude can decide whether to query new data or reuse existing findings
+- **Phase 2** gets the full previous report JSON and instructions to modify/extend it rather than starting from scratch
+
+The UI switches to "refinement mode" - the input placeholder changes to "Ask a follow-up question...", the submit button reads "Refine", and example prompts are hidden. A "New report" button lets the user clear context and start fresh.
+
 ### Key Design Decisions
 
-| Decision | Rationale |
-|----------|-----------|
-| **Zod schema shared end-to-end** | `lib/schema.ts` is imported by both the API route (server) and `useObject` (client). Single source of truth for types. |
-| **Discriminated union on `visualisation`** | Each section type (kpi_card, table, bar_chart, line_chart) has its own data shape. TypeScript enforces correct props per visualisation type. |
-| **Section readiness gates** | During streaming, sections exist as deeply partial objects. Each renderer checks for minimum required fields before mounting (e.g. table needs `columns` AND `rows`). Shows skeleton otherwise. |
-| **Lazy Supabase client** | `supabase-admin.ts` uses a Proxy for lazy initialization — env vars are validated at first use, not at module load. This lets `next build` succeed without env vars set. |
-| **`server-only` import** | Prevents accidental client-side bundling of the service role key. |
-| **Supabase RPC functions** | All data access goes through Postgres functions (not raw table queries). Functions use `SECURITY DEFINER` and `SET search_path = public`. The `get_timeseries` function whitelists allowed metric columns rather than accepting arbitrary identifiers. |
-| **Standardized tool return shape** | All tools return `{ ok: true, data }` or `{ ok: false, error }` so the LLM can pattern-match reliably on failures and adapt its narrative. |
-| **ErrorBoundary per section** | Malformed AI output crashes are isolated to individual sections, not the entire report. |
-| **Raw numeric data contract** | The AI is instructed to emit raw numbers in table rows (no currency symbols, commas, or percent signs). The frontend handles all formatting, which keeps sorting correct. |
+| Decision                                   | Rationale                                                                                                                                                                                                                                                                                  |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Zod schema shared end-to-end**           | `lib/schema.ts` is imported by both the API route (server) and `useObject` (client). Single source of truth for types.                                                                                                                                                                     |
+| **Discriminated union on `visualisation`** | Each section type (kpi_card, table, bar_chart, line_chart) has its own data shape. TypeScript enforces correct props per visualisation type.                                                                                                                                               |
+| **Section readiness gates**                | During streaming, sections exist as deeply partial objects. Each renderer checks for minimum required fields before mounting (e.g. table needs `columns` AND `rows`). Shows skeleton otherwise.                                                                                            |
+| **Lazy Supabase client**                   | `supabase-admin.ts` uses a Proxy for lazy initialization - env vars are validated at first use, not at module load. This lets `next build` succeed without env vars set.                                                                                                                   |
+| **`server-only` import**                   | Prevents accidental client-side bundling of the service role key.                                                                                                                                                                                                                          |
+| **Supabase RPC functions**                 | All data access goes through Postgres functions (not raw table queries). Functions use `SECURITY DEFINER` and `SET search_path = public`. The `get_timeseries` function whitelists allowed metric columns rather than accepting arbitrary identifiers.                                     |
+| **Standardized tool return shape**         | All tools return `{ ok: true, data }` or `{ ok: false, error }` so the LLM can pattern-match reliably on failures and adapt its narrative.                                                                                                                                                 |
+| **ErrorBoundary per section**              | Malformed AI output crashes are isolated to individual sections, not the entire report.                                                                                                                                                                                                    |
+| **Raw numeric data contract**              | The AI is instructed to emit raw numbers in table rows (no currency symbols, commas, or percent signs). The frontend handles all formatting, which keeps sorting correct.                                                                                                                  |
+| **Prompt refinement**                      | Follow-up prompts pass the previous report as context to both Phase 1 (so Claude skips redundant queries) and Phase 2 (so Claude modifies the existing report instead of rebuilding from scratch). Client tracks the last completed report in a ref and sends it alongside the new prompt. |
 
 ## Project Structure
 
@@ -122,7 +132,7 @@ lib/
   tools.ts           # 4 AI tool definitions (Supabase bridge)
 
 app/
-  page.tsx           # Main page — prompt input + streaming report
+  page.tsx           # Main page - prompt input + streaming report
   reports/page.tsx   # Past reports history
   api/
     report/route.ts      # Two-phase streaming endpoint
@@ -144,13 +154,13 @@ seed.sql               # Database schema, RPC functions, seed data, RLS
 
 ## Tech Stack
 
-- **Next.js 16** — App Router, React 19, TypeScript
-- **Vercel AI SDK v6** — `generateText` (tool-calling), `streamObject` (streaming structured JSON), `useObject` (client-side partial object streaming)
-- **Anthropic Claude** — claude-sonnet-4-20250514 for both phases
-- **Supabase** — Postgres database with RPC functions and RLS
-- **Zod 4** — Schema validation, shared between server and client
-- **Recharts** — Bar and line chart rendering
-- **Tailwind CSS v4** — Styling
+- **Next.js 16** - App Router, React 19, TypeScript
+- **Vercel AI SDK v6** - `generateText` (tool-calling), `streamObject` (streaming structured JSON), `useObject` (client-side partial object streaming)
+- **Anthropic Claude** - claude-sonnet-4-20250514 for both phases
+- **Supabase** - Postgres database with RPC functions and RLS
+- **Zod 4** - Schema validation, shared between server and client
+- **Recharts** - Bar and line chart rendering
+- **Tailwind CSS v4** - Styling
 
 ## Seed Data
 
@@ -160,20 +170,20 @@ No real customer or production data is used.
 
 ## Error Handling
 
-| Scenario | Handling |
-|----------|----------|
-| Malformed AI output | ErrorBoundary per section — catches render crashes, shows fallback with reset button |
+| Scenario                | Handling                                                                                      |
+| ----------------------- | --------------------------------------------------------------------------------------------- |
+| Malformed AI output     | ErrorBoundary per section - catches render crashes, shows fallback with reset button          |
 | Supabase query failures | Tool try/catch returns error string to LLM; LLM mentions data unavailability in its narrative |
-| Streaming errors | `error` from `useObject()` displayed as banner; stop button available |
-| Missing/partial data | Skeleton placeholders for sections awaiting required fields |
-| Missing env vars | Lazy client defers validation to runtime; clear error message |
+| Streaming errors        | `error` from `useObject()` displayed as banner; stop button available                         |
+| Missing/partial data    | Skeleton placeholders for sections awaiting required fields                                   |
+| Missing env vars        | Lazy client defers validation to runtime; clear error message                                 |
 
 ## Trade-offs & Improvements
 
 **Trade-offs made:**
 
 - The two-phase approach means the user waits for all tool calls to complete before seeing the report stream. A tighter integration could show progress during data fetching, but the clean separation makes the pipeline easier to debug and extend.
-- No authentication — the service role key is only used server-side, but there's no user auth layer.
+- No authentication - the service role key is only used server-side, but there's no user auth layer.
 
 **With more time, I would:**
 
